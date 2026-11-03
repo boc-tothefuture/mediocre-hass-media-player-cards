@@ -115,6 +115,7 @@ export const MediocreCompactMultiMediaPlayerCard = ({
     tap_opens_popup,
     entity_id,
     action,
+    showSourceSelection,
   } = useMemo(() => {
     if (!selectedPlayer || config.size !== "compact") {
       return {};
@@ -134,6 +135,7 @@ export const MediocreCompactMultiMediaPlayerCard = ({
       use_art_colors: config.use_art_colors,
       entity_id: selectedPlayer.entity_id,
       action: selectedPlayer.action,
+      showSourceSelection: config.options?.show_source_selection,
     };
   }, [config, selectedPlayer]);
 
@@ -307,6 +309,7 @@ export const MediocreCompactMultiMediaPlayerCard = ({
                       ma_favorite_button_entity_id ?? undefined
                     }
                     lms_entity_id={lms_entity_id ?? undefined}
+                    noSourceSelection={showSourceSelection === false}
                     renderTrigger={triggerProps => (
                       <IconButton
                         id="mmpc-compact-additional-actions-trigger"

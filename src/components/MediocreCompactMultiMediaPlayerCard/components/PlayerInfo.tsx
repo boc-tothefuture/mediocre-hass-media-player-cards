@@ -1,4 +1,7 @@
+import { useContext } from "preact/hooks";
 import { Icon, useHass, usePlayer } from "@components";
+import { CardContext, CardContextType } from "@components/CardContext";
+import type { MediocreMultiMediaPlayerCardConfig } from "@types";
 import { getDeviceIcon } from "@utils";
 import { css } from "@emotion/react";
 import { theme } from "@constants";
@@ -20,6 +23,10 @@ const styles = {
 };
 
 export const PlayerInfo = () => {
+  const { config } =
+    useContext<CardContextType<MediocreMultiMediaPlayerCardConfig>>(
+      CardContext
+    );
   const hass = useHass();
   const { selectedPlayer: { entity_id, speaker_group_entity_id, name } = {} } =
     useSelectedPlayer();
@@ -37,7 +44,9 @@ export const PlayerInfo = () => {
   return (
     <div css={styles.root}>
       <Icon icon={mdiIcon} size={"xx-small"} />
-      <span css={styles.friendlyName}>{name ?? playerName}</span>
+      {config?.options?.show_player_name !== false && (
+        <span css={styles.friendlyName}>{name ?? playerName}</span>
+      )}
       {groupMembers && groupMembers.length > 1 && (
         <span css={styles.friendlyName}>+{groupMembers.length - 1}</span>
       )}

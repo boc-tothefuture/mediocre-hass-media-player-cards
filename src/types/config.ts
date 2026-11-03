@@ -6,6 +6,8 @@ const commonMediocreMediaPlayerCardConfigOptionsSchema = type({
   "show_volume_step_buttons?": "boolean", // Show volume step buttons + - on volume sliders
   "use_volume_up_down_for_step_buttons?": "boolean", // Use volume_up and volume_down services for step buttons instead of setting volume using set_volume. This breaks volume sync when step buttons are used.
   "use_experimental_lms_media_browser?": "boolean", // Use the experimental LMS media browser instead of the default one when an LMS entity is used and lyrion_cli integration is present.
+  "show_player_name?": "boolean", // Show the player name line (default true)
+  "show_source_selection?": "boolean", // Show "Select source" in the ⋮ menu (default true)
 });
 
 const searchMediaTypeSchema = type({
@@ -111,6 +113,8 @@ export const commonMediaPlayerCardOptions = type({
   "show_volume_step_buttons?": "boolean", // Show volume step buttons + - on volume sliders
   "use_volume_up_down_for_step_buttons?": "boolean", // Use volume_up and volume_down services for step buttons instead of setting volume using set_volume. This breaks volume sync when step buttons are used.
   "use_experimental_lms_media_browser?": "boolean", // Use the experimental LMS media browser instead of the default one when an LMS entity is used and lyrion_cli integration is present.
+  "show_player_name?": "boolean", // Show the player name line (default true)
+  "show_source_selection?": "boolean", // Show "Select source" in the ⋮ menu (default true)
 });
 
 export const commonMediaPlayerCardSchema = type({

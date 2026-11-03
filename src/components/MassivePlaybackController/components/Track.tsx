@@ -1,5 +1,6 @@
-import { useMemo, useEffect, useState } from "preact/hooks";
+import { useContext, useMemo, useEffect, useState } from "preact/hooks";
 import { Icon, ProgressBar, usePlayer } from "@components";
+import { CardContext } from "@components/CardContext";
 import { css } from "@emotion/react";
 import { theme } from "@constants";
 import {
@@ -47,6 +48,9 @@ const styles = {
 };
 
 export const Track = () => {
+  const cardContext = useContext(CardContext);
+  const showSourceSelection =
+    cardContext?.config?.options?.show_source_selection !== false;
   const player = usePlayer();
   const [tick, setTick] = useState(0);
   const isPlaying = player.state === "playing";
@@ -91,29 +95,32 @@ export const Track = () => {
       <div
         css={[
           styles.timeWrap,
-          !player.attributes.source && styles.timeWrapNoSource,
+          (!player.attributes.source || !showSourceSelection) &&
+            styles.timeWrapNoSource,
         ]}
       >
         {position && <span>{position.prettyNow}</span>}
-        {sourceSelectMenuItems.length > 0 && player.attributes.source && (
-          <OverlayMenu
-            align="center"
-            menuItems={sourceSelectMenuItems}
-            renderTrigger={triggerProps => (
-              <button {...triggerProps} css={styles.sourceSelect}>
-                <Icon
-                  size="xx-small"
-                  icon={getSourceIcon({
-                    source: player.attributes.source ?? "",
-                    fallbackIcon: "mdi:import",
-                  })}
-                />
-                {player.attributes.source}
-                <Icon size="xx-small" icon="mdi:chevron-down" />
-              </button>
-            )}
-          />
-        )}
+        {showSourceSelection &&
+          sourceSelectMenuItems.length > 0 &&
+          player.attributes.source && (
+            <OverlayMenu
+              align="center"
+              menuItems={sourceSelectMenuItems}
+              renderTrigger={triggerProps => (
+                <button {...triggerProps} css={styles.sourceSelect}>
+                  <Icon
+                    size="xx-small"
+                    icon={getSourceIcon({
+                      source: player.attributes.source ?? "",
+                      fallbackIcon: "mdi:import",
+                    })}
+                  />
+                  {player.attributes.source}
+                  <Icon size="xx-small" icon="mdi:chevron-down" />
+                </button>
+              )}
+            />
+          )}
         {position && <span>{position.prettyEnd}</span>}
       </div>
     </div>

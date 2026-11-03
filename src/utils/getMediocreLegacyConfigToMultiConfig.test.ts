@@ -63,6 +63,8 @@ describe("getMediocreLegacyConfigToMediocreMultiConfig", () => {
           always_show_power_button: false,
           hide_when_group_child: false,
           hide_when_off: false,
+          show_player_name: true,
+          show_source_selection: true,
         }),
         media_players: [
           expect.objectContaining({
@@ -127,7 +129,27 @@ describe("getMediocreLegacyConfigToMediocreMultiConfig", () => {
       always_show_power_button: false,
       hide_when_group_child: false,
       hide_when_off: false,
+      show_player_name: true,
+      show_source_selection: true,
     });
+  });
+
+  it("should handle explicit false for show_player_name and show_source_selection", () => {
+    const config = {
+      ...baseConfig,
+      options: {
+        ...baseConfig.options,
+        show_player_name: false,
+        show_source_selection: false,
+      },
+    };
+    const result = getMediocreLegacyConfigToMediocreMultiConfig(config);
+    expect(result.options).toEqual(
+      expect.objectContaining({
+        show_player_name: false,
+        show_source_selection: false,
+      })
+    );
   });
 
   it("should handle speaker_group with only string entities", () => {

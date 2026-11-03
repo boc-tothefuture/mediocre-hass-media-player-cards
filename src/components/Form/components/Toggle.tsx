@@ -5,13 +5,19 @@ import {
 } from "@components/FormElements";
 import { useFieldContext } from "../hooks/useAppForm";
 
-export function Toggle({ label }: { label: string }) {
+export function Toggle({
+  label,
+  defaultValue = false,
+}: {
+  label: string;
+  defaultValue?: boolean;
+}) {
   const field = useFieldContext<boolean | undefined>();
   return (
     <ToggleContainer>
       <ToggleComponent
         id={field.name}
-        checked={field.state.value}
+        checked={field.state.value ?? defaultValue}
         onChange={e =>
           field.handleChange((e.target as HTMLInputElement)?.checked ?? false)
         }

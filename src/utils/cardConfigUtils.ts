@@ -43,6 +43,12 @@ export const getDefaultValuesFromConfig = (
       config?.options?.use_volume_up_down_for_step_buttons ?? false,
     use_experimental_lms_media_browser:
       config?.options?.use_experimental_lms_media_browser ?? false,
+    ...(config?.options?.show_player_name !== undefined && {
+      show_player_name: config.options.show_player_name,
+    }),
+    ...(config?.options?.show_source_selection !== undefined && {
+      show_source_selection: config.options.show_source_selection,
+    }),
   },
   grid_options: config?.grid_options,
   visibility: config?.visibility,
@@ -82,6 +88,12 @@ export const getDefaultValuesFromMassiveConfig = (
       config?.options?.use_volume_up_down_for_step_buttons ?? false,
     use_experimental_lms_media_browser:
       config?.options?.use_experimental_lms_media_browser ?? false,
+    ...(config?.options?.show_player_name !== undefined && {
+      show_player_name: config.options.show_player_name,
+    }),
+    ...(config?.options?.show_source_selection !== undefined && {
+      show_source_selection: config.options.show_source_selection,
+    }),
   },
   grid_options: config?.grid_options,
   visibility: config?.visibility,
@@ -148,6 +160,12 @@ export const getSimpleConfigFromFormValues = (
   if (config.options?.use_experimental_lms_media_browser === false) {
     delete config.options.use_experimental_lms_media_browser;
   }
+  if (config.options?.show_player_name === true) {
+    delete config.options.show_player_name;
+  }
+  if (config.options?.show_source_selection === true) {
+    delete config.options.show_source_selection;
+  }
 
   if (Object.keys(config.options ?? {}).length === 0) {
     delete config.options;
@@ -213,6 +231,12 @@ export const getSimpleConfigFromMassiveFormValues = (
   }
   if (config.options?.use_experimental_lms_media_browser === false) {
     delete config.options.use_experimental_lms_media_browser;
+  }
+  if (config.options?.show_player_name === true) {
+    delete config.options.show_player_name;
+  }
+  if (config.options?.show_source_selection === true) {
+    delete config.options.show_source_selection;
   }
 
   if (Object.keys(config.options ?? {}).length === 0) {

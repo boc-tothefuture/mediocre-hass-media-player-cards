@@ -55,13 +55,11 @@ export const AdditionalActionsView = memo(() => {
     lms_entity_id,
   } = selectedPlayer!;
 
-  const {
-    rootElement,
-    config: { media_players },
-  } =
+  const { rootElement, config } =
     useContext<CardContextType<MediocreMultiMediaPlayerCardConfig>>(
       CardContext
     );
+  const { media_players } = config;
 
   const hass = useHass();
 
@@ -236,24 +234,26 @@ export const AdditionalActionsView = memo(() => {
               )}
             />
           )}
-          {sourceSelectMenuItems.length > 0 && player.attributes.source && (
-            <OverlayMenu
-              side="bottom"
-              menuItems={sourceSelectMenuItems}
-              renderTrigger={triggerProps => (
-                <Chip
-                  {...triggerProps}
-                  icon={getSourceIcon({
-                    source: player.attributes.source ?? "",
-                    fallbackIcon: "mdi:import",
-                  })}
-                >
-                  {player.attributes.source}
-                  <Icon size="x-small" icon="mdi:chevron-down" />
-                </Chip>
-              )}
-            />
-          )}
+          {config.options?.show_source_selection !== false &&
+            sourceSelectMenuItems.length > 0 &&
+            player.attributes.source && (
+              <OverlayMenu
+                side="bottom"
+                menuItems={sourceSelectMenuItems}
+                renderTrigger={triggerProps => (
+                  <Chip
+                    {...triggerProps}
+                    icon={getSourceIcon({
+                      source: player.attributes.source ?? "",
+                      fallbackIcon: "mdi:import",
+                    })}
+                  >
+                    {player.attributes.source}
+                    <Icon size="x-small" icon="mdi:chevron-down" />
+                  </Chip>
+                )}
+              />
+            )}
           <Chip icon="mdi:information-outline" {...moreInfoButtonProps}>
             {t({
               id: "MediocreMultiMediaPlayerCard.AdditionalActionsView.more_info",

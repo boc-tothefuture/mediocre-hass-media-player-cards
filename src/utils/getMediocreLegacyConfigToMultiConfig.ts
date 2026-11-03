@@ -65,6 +65,8 @@ export const getMediocreLegacyConfigToMediocreMultiConfig = (
       hide_when_off: config.options?.hide_when_off ?? false,
       use_experimental_lms_media_browser:
         config.options?.use_experimental_lms_media_browser ?? false,
+      show_player_name: config.options?.show_player_name ?? true,
+      show_source_selection: config.options?.show_source_selection ?? true,
     },
     media_players,
   };

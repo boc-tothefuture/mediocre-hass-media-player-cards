@@ -239,6 +239,18 @@ export const MediocreMediaPlayerCardEditor: FC<
           )}
         />
         <form.AppField
+          name="options.show_player_name"
+          children={field => (
+            <field.Toggle label="Show player name" defaultValue={true} />
+          )}
+        />
+        <form.AppField
+          name="options.show_source_selection"
+          children={field => (
+            <field.Toggle label="Show source selection" defaultValue={true} />
+          )}
+        />
+        <form.AppField
           name="options.show_volume_step_buttons"
           children={field => (
             <field.Toggle label="Show volume step buttons + - on volume sliders" />
