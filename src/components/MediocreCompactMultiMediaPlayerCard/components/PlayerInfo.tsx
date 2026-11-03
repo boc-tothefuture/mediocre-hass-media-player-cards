@@ -41,12 +41,17 @@ export const PlayerInfo = () => {
       ?.group_members;
   const mdiIcon = getDeviceIcon({ icon, deviceClass });
 
+  const showName = config?.options?.show_player_name !== false;
+  const hasGroupMembers = Boolean(groupMembers && groupMembers.length > 1);
+
+  if (!showName && !hasGroupMembers) {
+    return null;
+  }
+
   return (
     <div css={styles.root}>
-      <Icon icon={mdiIcon} size={"xx-small"} />
-      {config?.options?.show_player_name !== false && (
-        <span css={styles.friendlyName}>{name ?? playerName}</span>
-      )}
+      {showName && <Icon icon={mdiIcon} size={"xx-small"} />}
+      {showName && <span css={styles.friendlyName}>{name ?? playerName}</span>}
       {groupMembers && groupMembers.length > 1 && (
         <span css={styles.friendlyName}>+{groupMembers.length - 1}</span>
       )}
