@@ -9,16 +9,24 @@ import { useSelectedPlayer } from "@components/SelectedPlayerContext";
 
 const styles = {
   root: css({
-    display: "flex",
+    display: "inline-flex",
     flexDirection: "row",
     alignItems: "center",
-    gap: "4px",
+    gap: "3px",
+    backgroundColor: "rgba(255, 255, 255, 0.14)",
+    padding: "1px 6px",
+    borderRadius: "999px",
+    flexShrink: 0,
+    maxWidth: "140px",
   }),
   friendlyName: css({
-    fontSize: "11px",
-    color: theme.colors.onCardMuted,
-    opacity: 0.8,
-    fontStyle: "italic",
+    fontSize: "10px",
+    fontWeight: 600,
+    lineHeight: 1.3,
+    color: "var(--mmpc-meta-secondary-color, " + theme.colors.onCardMuted + ")",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
   }),
 };
 
@@ -31,9 +39,10 @@ export const PlayerInfo = () => {
   const { selectedPlayer: { entity_id, speaker_group_entity_id, name } = {} } =
     useSelectedPlayer();
   const {
+    state,
     attributes: { friendly_name: playerName, icon, device_class: deviceClass },
   } = usePlayer();
-  if (!entity_id) {
+  if (!entity_id || state === "off" || state === "unavailable") {
     return null;
   }
   const groupMembers =
@@ -50,7 +59,7 @@ export const PlayerInfo = () => {
 
   return (
     <div css={styles.root}>
-      {showName && <Icon icon={mdiIcon} size={"xx-small"} />}
+      {showName && <Icon icon={mdiIcon} size={"xxx-small"} />}
       {showName && <span css={styles.friendlyName}>{name ?? playerName}</span>}
       {groupMembers && groupMembers.length > 1 && (
         <span css={styles.friendlyName}>+{groupMembers.length - 1}</span>
