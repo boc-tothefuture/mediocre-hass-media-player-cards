@@ -8,34 +8,24 @@ import { theme } from "@constants";
 const styles = {
   titleText: css({
     margin: 0,
-    fontSize: "14px",
+    fontSize: "13.5px",
     fontWeight: 700,
-    lineHeight: 1.2,
+    lineHeight: 1.15,
     whiteSpace: "nowrap",
     overflow: "hidden",
     textOverflow: "ellipsis",
     color: "var(--mmpc-meta-primary-color, " + theme.colors.onCard + ")",
   }),
   titleTextOff: css({
+    fontSize: "14px",
     fontWeight: 600,
     opacity: 0.85,
   }),
-  subtitleRow: css({
-    display: "flex",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: "6px",
-    minWidth: 0,
-    marginTop: "1px",
-    "&:empty": {
-      display: "none",
-    },
-  }),
   artistText: css({
     margin: 0,
-    fontSize: "12px",
+    fontSize: "11.5px",
     fontWeight: 500,
-    lineHeight: 1.2,
+    lineHeight: 1.15,
     color: "var(--mmpc-meta-secondary-color, " + theme.colors.onCardMuted + ")",
     whiteSpace: "nowrap",
     overflow: "hidden",
@@ -62,9 +52,7 @@ export const MetaInfo = () => {
           <h3 css={[styles.titleText, styles.titleTextOff]}>{playerName}</h3>
         )}
         {!!title && (
-          <div css={styles.subtitleRow}>
-            <p css={[styles.artistText, styles.artistTextOff]}>{title}</p>
-          </div>
+          <p css={[styles.artistText, styles.artistTextOff]}>{title}</p>
         )}
       </Fragment>
     );
@@ -78,10 +66,8 @@ export const MetaInfo = () => {
   return (
     <Fragment>
       {!!title && <h3 css={styles.titleText}>{title}</h3>}
-      <div css={styles.subtitleRow}>
-        {!!displaySubtitle && <p css={styles.artistText}>{displaySubtitle}</p>}
-        <PlayerInfo />
-      </div>
+      {!!displaySubtitle && <p css={styles.artistText}>{displaySubtitle}</p>}
+      <PlayerInfo />
     </Fragment>
   );
 };

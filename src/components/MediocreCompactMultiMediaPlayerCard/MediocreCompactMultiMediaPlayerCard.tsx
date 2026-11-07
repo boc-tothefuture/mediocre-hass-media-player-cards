@@ -159,6 +159,7 @@ const styles = {
     display: "flex",
     flexDirection: "column",
     justifyContent: "center",
+    gap: "1px",
     minWidth: 0,
     flex: 1,
     height: "100%",
@@ -209,6 +210,32 @@ const styles = {
     border: "1px solid rgba(255, 255, 255, 0.08)",
     color: "rgba(255, 255, 255, 0.9)",
     "--icon-primary-color": "rgba(255, 255, 255, 0.9)",
+  }),
+  groupBtnWrapper: css({
+    position: "relative",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+  }),
+  groupBadge: css({
+    position: "absolute",
+    top: "-2px",
+    right: "-3px",
+    minWidth: "16px",
+    height: "15px",
+    padding: "0 4px",
+    borderRadius: "999px",
+    backgroundColor: "var(--primary-color, #89b4fa)",
+    color: "#11111b",
+    fontSize: "9.5px",
+    fontWeight: 700,
+    lineHeight: "15px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    pointerEvents: "none",
+    boxShadow: "0 1px 4px rgba(0, 0, 0, 0.45)",
+    zIndex: 3,
   }),
 };
 
@@ -356,7 +383,7 @@ export const MediocreCompactMultiMediaPlayerCard = ({
     if (!groupingEntityId) return false;
     const player = hass.states[groupingEntityId];
     if (
-      !player.attributes.group_members ||
+      !player?.attributes?.group_members ||
       player.attributes.group_members.length === 0
     ) {
       return false;
@@ -365,6 +392,16 @@ export const MediocreCompactMultiMediaPlayerCard = ({
       player.attributes.group_members.length > 1 &&
       player.attributes.group_members[0] !== groupingEntityId
     );
+  }, [selectedPlayer, hass, entity_id]);
+
+  const extraGroupCount = useMemo(() => {
+    const groupingEntityId =
+      selectedPlayer?.speaker_group_entity_id ?? entity_id;
+    if (!groupingEntityId) return 0;
+    const groupMembers =
+      hass.states[groupingEntityId]?.attributes?.group_members;
+    if (!groupMembers || groupMembers.length <= 1) return 0;
+    return groupMembers.length - 1;
   }, [selectedPlayer, hass, entity_id]);
 
   const supportedFeatures = useSupportedFeatures();
@@ -513,6 +550,7 @@ export const MediocreCompactMultiMediaPlayerCard = ({
                   : undefined
               }
               onToggleGrouping={hasGroupingFeature ? toggleGrouping : undefined}
+              extraGroupCount={extraGroupCount}
             />
           ) : (
             <Fragment>
@@ -550,14 +588,19 @@ export const MediocreCompactMultiMediaPlayerCard = ({
                   setSliderVisible={setShowVolumeSlider}
                 />
                 {hasGroupingFeature && (
-                  <IconButton
-                    id="mmpc-compact-grouping-toggle"
-                    css={styles.frostedActionBtn}
-                    style={{ "--mmpc-icon-button-size": "18px" }}
-                    size="x-small"
-                    onClick={toggleGrouping}
-                    icon={"mdi:speaker-multiple"}
-                  />
+                  <div css={styles.groupBtnWrapper}>
+                    <IconButton
+                      id="mmpc-compact-grouping-toggle"
+                      css={styles.frostedActionBtn}
+                      style={{ "--mmpc-icon-button-size": "18px" }}
+                      size="x-small"
+                      onClick={toggleGrouping}
+                      icon={"mdi:speaker-multiple"}
+                    />
+                    {extraGroupCount > 0 && (
+                      <span css={styles.groupBadge}>+{extraGroupCount}</span>
+                    )}
+                  </div>
                 )}
                 {!isEmbeddedInMultiCard &&
                   config.size === "compact" &&

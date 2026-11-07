@@ -192,16 +192,45 @@ const styles = {
     marginRight: "2px",
     textShadow: "0 1px 3px rgba(0, 0, 0, 0.4)",
   }),
+  groupBtnWrapper: css({
+    position: "relative",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    pointerEvents: "auto",
+  }),
+  groupBadge: css({
+    position: "absolute",
+    top: "-2px",
+    right: "-3px",
+    minWidth: "16px",
+    height: "15px",
+    padding: "0 4px",
+    borderRadius: "999px",
+    backgroundColor: "var(--primary-color, #89b4fa)",
+    color: "#11111b",
+    fontSize: "9.5px",
+    fontWeight: 700,
+    lineHeight: "15px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    pointerEvents: "none",
+    boxShadow: "0 1px 4px rgba(0, 0, 0, 0.45)",
+    zIndex: 3,
+  }),
 };
 
 export type VolumeSliderProps = {
   onClose?: () => void;
   onToggleGrouping?: () => void;
+  extraGroupCount?: number;
 };
 
 export const VolumeSlider = ({
   onClose,
   onToggleGrouping,
+  extraGroupCount = 0,
 }: VolumeSliderProps = {}) => {
   const { config } =
     useContext<CardContextType<MediocreMultiMediaPlayerCardConfig>>(
@@ -353,17 +382,22 @@ export const VolumeSlider = ({
             />
           )}
           {onToggleGrouping && (
-            <IconButton
-              id="mmpc-compact-volume-grouping-toggle"
-              css={styles.actionButton}
-              style={{ "--mmpc-icon-button-size": "18px" }}
-              size="x-small"
-              onClick={e => {
-                e.stopPropagation();
-                onToggleGrouping();
-              }}
-              icon={"mdi:speaker-multiple"}
-            />
+            <div css={styles.groupBtnWrapper}>
+              <IconButton
+                id="mmpc-compact-volume-grouping-toggle"
+                css={styles.actionButton}
+                style={{ "--mmpc-icon-button-size": "18px" }}
+                size="x-small"
+                onClick={e => {
+                  e.stopPropagation();
+                  onToggleGrouping();
+                }}
+                icon={"mdi:speaker-multiple"}
+              />
+              {extraGroupCount > 0 && (
+                <span css={styles.groupBadge}>+{extraGroupCount}</span>
+              )}
+            </div>
           )}
           {onClose && (
             <IconButton
