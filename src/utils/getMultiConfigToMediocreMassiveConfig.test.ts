@@ -176,4 +176,25 @@ describe("getMultiConfigToMediocreMassiveConfig", () => {
       use_experimental_lms_media_browser: false,
     });
   });
+
+  it("should preserve self_entity_id, join_service, and unjoin_service on speaker_group", () => {
+    const playerWithServices = {
+      ...baseConfig.media_players[0],
+      speaker_group_self_entity_id: "media_player.kitchen",
+      speaker_group_join_service: "script.music_zone_group_join",
+      speaker_group_unjoin_service: "script.music_zone_group_unjoin",
+    };
+    const result = getMultiConfigToMediocreMassiveConfig(
+      baseConfig,
+      playerWithServices,
+      "panel"
+    );
+    expect(result.speaker_group).toEqual(
+      expect.objectContaining({
+        self_entity_id: "media_player.kitchen",
+        join_service: "script.music_zone_group_join",
+        unjoin_service: "script.music_zone_group_unjoin",
+      })
+    );
+  });
 });

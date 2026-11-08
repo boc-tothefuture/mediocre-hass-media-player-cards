@@ -161,4 +161,32 @@ describe("getMediocreMassiveLegacyConfigToMediocreMultiConfig", () => {
     });
     expect(result.media_players[0].ma_entity_id).toBe("media_player.mass");
   });
+
+  it("passes self_entity_id, join_service, and unjoin_service, skipping self_entity_id from group entities", () => {
+    const config: MediocreMassiveMediaPlayerCardConfig = {
+      ...baseConfig,
+      entity_id: "media_player.kitchen_stream",
+      speaker_group: {
+        entity_id: "sensor.kitchen_stream_group",
+        self_entity_id: "media_player.kitchen",
+        join_service: "script.music_zone_group_join",
+        unjoin_service: "script.music_zone_group_unjoin",
+        entities: ["media_player.kitchen", "media_player.brians_office"],
+      },
+    };
+    const result = getMediocreMassiveLegacyConfigToMediocreMultiConfig(config);
+    expect(result.media_players[0]).toEqual(
+      expect.objectContaining({
+        entity_id: "media_player.kitchen_stream",
+        speaker_group_entity_id: "sensor.kitchen_stream_group",
+        speaker_group_self_entity_id: "media_player.kitchen",
+        speaker_group_join_service: "script.music_zone_group_join",
+        speaker_group_unjoin_service: "script.music_zone_group_unjoin",
+      })
+    );
+    const groupEntities = (
+      result.media_players.slice(1) as Array<{ entity_id: string }>
+    ).map(p => p.entity_id);
+    expect(groupEntities).toEqual(["media_player.brians_office"]);
+  });
 });

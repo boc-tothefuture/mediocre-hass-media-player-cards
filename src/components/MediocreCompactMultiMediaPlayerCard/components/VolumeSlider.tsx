@@ -10,6 +10,7 @@ import {
   CardContext,
   CardContextType,
   IconButton,
+  useHass,
   usePlayer,
 } from "@components";
 import { Fragment } from "preact/jsx-runtime";
@@ -236,12 +237,33 @@ export const VolumeSlider = ({
     useContext<CardContextType<MediocreMultiMediaPlayerCardConfig>>(
       CardContext
     );
-  const { selectedPlayer: { entity_id, speaker_group_entity_id, name } = {} } =
-    useSelectedPlayer();
+  const {
+    selectedPlayer: {
+      entity_id,
+      speaker_group_entity_id,
+      speaker_group_self_entity_id,
+      name,
+    } = {},
+  } = useSelectedPlayer();
   const player = usePlayer();
-  const volume = player.attributes?.volume_level ?? 0;
-  const volumeMuted = player.attributes?.is_volume_muted ?? false;
-  const targetEntityId = speaker_group_entity_id ?? entity_id;
+  const hass = useHass();
+  const targetEntityId =
+    speaker_group_self_entity_id ??
+    (speaker_group_entity_id && !speaker_group_entity_id.startsWith("sensor.")
+      ? speaker_group_entity_id
+      : entity_id);
+  const targetState =
+    targetEntityId && targetEntityId !== player.entity_id
+      ? hass.states[targetEntityId]
+      : player;
+  const volume =
+    targetState?.attributes?.volume_level ??
+    player.attributes?.volume_level ??
+    0;
+  const volumeMuted =
+    targetState?.attributes?.is_volume_muted ??
+    player.attributes?.is_volume_muted ??
+    false;
   const showStepButtons = config.options?.show_volume_step_buttons ?? false;
   const useVolumeUpDownForSteps =
     config.options?.use_volume_up_down_for_step_buttons ?? false;

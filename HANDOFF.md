@@ -1,4 +1,4 @@
-# Handoff Note — `v0.30.0-brian.6` (Bubble Card Media Player, Grouped Speakers & Smooth Volume Drag)
+# Handoff Note — `v0.30.0-brian.7` (Decoupled Speaker Grouping, Custom Join/Unjoin Services & Sensor Groups)
 
 ## 1. Card Type
 
@@ -9,13 +9,16 @@
 
 ## 2. Config Diff Against `v0.30.0-brian.2`
 
-No YAML configuration schema keys were added, renamed, or removed in `v0.30.0-brian.3`, `brian.4`, `brian.5`, or `brian.6`. All changes are visual/layout and behavioral updates to the compact/standard card (`MediocreCompactMultiMediaPlayerCard`, used by `custom:mediocre-media-player-card` and `custom:mediocre-multi-media-player-card` when `size: compact`).
+In `v0.30.0-brian.7`, three optional keys were added to `speaker_group` to decouple speaker grouping from native Home Assistant `media_player.join`/`media_player.unjoin` and support sensor-based group state (e.g. Nuvo multi-zone matrix systems):
 
-| Option                             | Type      | Default | Change vs `v0.30.0-brian.2`                                                                                                                                                                                                                                                                        |
-| ---------------------------------- | --------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| _(Schema options)_                 | —         | —       | **None** added, renamed, or removed.                                                                                                                                                                                                                                                               |
-| `options.show_volume_step_buttons` | `boolean` | `false` | Renders circular `-` / `+` step buttons (`±5%` or `volume_up`/`volume_down`) inside the right side of the new full-card Bubble volume slider overlay and inside the grouped speaker Bubble volume pills instead of inside the legacy narrow slider bar.                                            |
-| `options.always_show_power_button` | `boolean` | `false` | When `false` (default), no separate power button is rendered in the `off` state because **tapping anywhere on the off card pill** now toggles power on (`media_player.toggle`). When `true`, an explicit circular `mdi:power` button is still rendered on the right in both `on` and `off` states. |
+| Option                             | Type      | Default     | Change vs `v0.30.0-brian.2`                                                                                                                                                                                                                                                       |
+| ---------------------------------- | --------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- | --------------------- |
+| `speaker_group.self_entity_id`     | `string`  | `undefined` | **New in `brian.7`**. The card's own zone entity (e.g. `media_player.kitchen`). Excluded from the grouped member volume sliders and ungrouped chips, and treated as the group anchor. If unset, falls back to `speaker_group.entity_id                                            |     | entity_id` as before. |
+| `speaker_group.join_service`       | `string`  | `undefined` | **New in `brian.7`**. Custom action (e.g. `script.music_zone_group_join`) invoked when tapping a `+` chip, called with `{ group: <speaker_group.entity_id>, member: <tapped entity id> }` instead of calling `media_player.join`. When set, `media_player.turn_on` is not called. |
+| `speaker_group.unjoin_service`     | `string`  | `undefined` | **New in `brian.7`**. Custom action (e.g. `script.music_zone_group_unjoin`) invoked when tapping a `✕` button on a member volume pill, called with `{ group: <speaker_group.entity_id>, member: <tapped entity id> }` instead of calling `media_player.unjoin`.                   |
+| `speaker_group.entity_id`          | `string`  | `undefined` | Now supports sensors (e.g. `sensor.kitchen_stream_group`). The card reads `group_members` from this entity's attributes. It is no longer assumed to be a `media_player` (its state, domain, and volume are not read or targeted).                                                 |
+| `options.show_volume_step_buttons` | `boolean` | `false`     | Renders circular `-` / `+` step buttons (`±5%` or `volume_up`/`volume_down`) inside the right side of the full-card Bubble volume slider overlay and inside the grouped speaker Bubble volume pills.                                                                              |
+| `options.always_show_power_button` | `boolean` | `false`     | When `false` (default), no separate power button is rendered in the `off` state because **tapping anywhere on the off card pill** toggles power on (`media_player.toggle`). When `true`, an explicit circular `mdi:power` button is rendered on the right.                        |
 
 ---
 
@@ -27,11 +30,13 @@ All configurations from `v0.30.0-brian.2` remain valid and do not fail validatio
 - **`name`**: Unchanged. Used for the room name line when `on`, the primary title when `off`, and the label inside the full-card volume slider.
 - **`use_art_colors`**: Still supported. Note that when a track has valid album artwork (`entity_picture_local` or `entity_picture`), the artwork itself is now rendered full-bleed across the `56px` card background with a dark directional gradient scrim and white text (`#ffffff`) for guaranteed contrast.
 - **`action` / `action.tap_action`**: Still supported. Previously attached to the left square `AlbumArt` thumbnail; now attached to the clickable left title/artist metadata button when the player is `on`. (When the player is `off`, tapping the card calls `media_player.toggle` to turn the player on.)
-- **`speaker_group.entity_id` & `speaker_group.entities`**: Unchanged. The `mdi:speaker-multiple` toggle button opens the expandable speaker grouping drawer below the `56px` pill, is also accessible directly inside the full-card volume slider overlay, and displays a **`+N` badge** on its top-right corner when additional speakers are grouped (`group_members.length > 1`). In `v0.30.0-brian.5`, the entire grouped speakers drawer is redesigned to match the Bubble Card style:
-  - Top `56px` card keeps its rounded bottom corners (`border-radius: 28px`) even when the drawer is open.
-  - Grouped speakers render as **44px Bubble volume pills** with smooth translucent fills (`rgba(137, 180, 250, 0.65)`), circular `32px` mute toggles, full room names overlaid on the track (no horizontal cutoff), live `%` volume readouts, and circular `✕` unjoin buttons.
-  - Ungrouped speakers render as frosted dark Bubble chips (`rgba(255, 255, 255, 0.08)`) with `+` buttons.
-  - The `Link volume` toggle is a frosted Bubble chip pill in the section header.
+- **`speaker_group` Decoupling & Sensor Support (`brian.7`)**:
+  - `speaker_group.entity_id`: Can now be a sensor entity (such as `sensor.kitchen_stream_group`). The panel and `+N` badge read `group_members` from its attributes; the card does not assume it is a `media_player` and does not query or control its state, domain, or volume.
+  - `speaker_group.self_entity_id`: Specifies the anchor zone for this card (e.g. `media_player.kitchen`). It is excluded from the grouped member volume sliders and ungrouped chips. If unset, it falls back to `speaker_group.entity_id || entity_id` as in `brian.6`.
+  - `speaker_group.join_service`: If specified (e.g. `script.music_zone_group_join`), tapping a `+` chip invokes this action with payload `{ group: <speaker_group.entity_id>, member: <tapped entity id> }` rather than calling `media_player.join`. `media_player.turn_on` is omitted when a custom join service is configured.
+  - `speaker_group.unjoin_service`: If specified (e.g. `script.music_zone_group_unjoin`), tapping `✕` invokes this action with `{ group: <speaker_group.entity_id>, member: <tapped entity id> }` rather than calling `media_player.unjoin`.
+  - Member volume pills, mute buttons, and link-volume continue to directly use each speaker's own entity from `entities` (e.g. Nuvo zone `media_player.*`).
+  - **Audit of Assumptions on `speaker_group.entity_id`**: In `v0.30.0-brian.6`, `speaker_group.entity_id` was targeted by `VolumeSlider.tsx` for step adjustments and could be pushed into `availableSpeakers` as a member. In `brian.7`, `VolumeSlider.tsx` targets `speaker_group_self_entity_id ?? (isSensor ? entity_id : (speaker_group_entity_id ?? entity_id))`, `GroupVolumeController` excludes sensors and anchors, and `selectActiveMultiMediaPlayer.ts` handles `self_entity_id` anchors. When none of the new keys are configured, legacy behavior remains 100% identical.
 - **`options.always_show_power_button`**: Still works (see table above).
 - **`options.show_volume_step_buttons`**: Still works; renders `-` / `+` step buttons inside the full-card volume slider overlay and inside each grouped speaker volume pill.
 - **`options.show_player_name`**: **Still works explicitly as in `brian.2`**, and **the device icon still hides with the name** when `show_player_name: false`. When `show_player_name: true` (default), the device icon and player name render on their own dedicated 3rd line below the artist so the artist and room name never collide horizontally. When `show_player_name: false`, `PlayerInfo` returns `null` and the 3rd line collapses completely (while any grouped speaker count `+N` is shown as a badge on the speaker group button). (Note: In the `off` state, the card always displays the player's name and `"Off"` next to the `mdi:volume-off` badge so you can identify which off speaker you are tapping to turn on.)
@@ -112,6 +117,27 @@ options:
   show_volume_step_buttons: false
   show_player_name: true
   show_source_selection: true
+```
+
+### Decoupled Example (Sensor Group + Nuvo Multi-Zone Matrix Scripts)
+
+```yaml
+type: custom:mediocre-media-player-card
+entity_id: media_player.kitchen_stream
+name: Kitchen
+speaker_group:
+  entity_id: sensor.kitchen_stream_group # reads group_members from sensor attributes
+  self_entity_id: media_player.kitchen # card's own zone, excluded from sliders and chips
+  join_service: script.music_zone_group_join # receives { group: "sensor.kitchen_stream_group", member: "media_player.brians_office" }
+  unjoin_service: script.music_zone_group_unjoin # receives { group: "sensor.kitchen_stream_group", member: "media_player.brians_office" }
+  entities:
+    - media_player.kitchen
+    - media_player.brians_office
+    - media_player.covered_deck
+    - media_player.family_room
+options:
+  show_player_name: true
+  show_volume_step_buttons: true
 ```
 
 ---

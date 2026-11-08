@@ -386,19 +386,23 @@ export const MediocreCompactMultiMediaPlayerCard = ({
   const hass = useHass();
 
   const isGroupChild = useMemo(() => {
+    const selfId =
+      selectedPlayer?.speaker_group_self_entity_id ||
+      selectedPlayer?.speaker_group_entity_id ||
+      entity_id;
     const groupingEntityId =
       selectedPlayer?.speaker_group_entity_id ?? entity_id;
     if (!groupingEntityId) return false;
-    const player = hass.states[groupingEntityId];
+    const entityState = hass.states[groupingEntityId];
     if (
-      !player?.attributes?.group_members ||
-      player.attributes.group_members.length === 0
+      !entityState?.attributes?.group_members ||
+      entityState.attributes.group_members.length === 0
     ) {
       return false;
     }
     return (
-      player.attributes.group_members.length > 1 &&
-      player.attributes.group_members[0] !== groupingEntityId
+      entityState.attributes.group_members.length > 1 &&
+      entityState.attributes.group_members[0] !== selfId
     );
   }, [selectedPlayer, hass, entity_id]);
 

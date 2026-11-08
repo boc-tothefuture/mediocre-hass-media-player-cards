@@ -53,6 +53,7 @@ export const GroupChipsController: FC<GroupChipsControllerProps> = ({
 
   // Use the specified entity_id for the group or fall back to the main entity_id
   const mainEntityId = speaker_group?.entity_id || entity_id;
+  const selfEntityId = speaker_group?.self_entity_id || mainEntityId;
   const mainEntity = hass.states[mainEntityId];
 
   // Get all available speakers that can be grouped
@@ -62,7 +63,10 @@ export const GroupChipsController: FC<GroupChipsControllerProps> = ({
       typeof entity === "string" ? entity : entity.entity;
 
     return speaker_group.entities
-      .filter(entity => getEntityId(entity) !== mainEntityId)
+      .filter(entity => {
+        const id = getEntityId(entity);
+        return id !== selfEntityId && id !== mainEntityId;
+      })
       .filter(entity => hass.states[getEntityId(entity)])
       .map(entity => ({
         entity_id: getEntityId(entity),
@@ -84,8 +88,8 @@ export const GroupChipsController: FC<GroupChipsControllerProps> = ({
         return !speaker.isGrouped;
       })
       .sort((a, b) => {
-        if (a.entity_id === mainEntityId) return -1;
-        if (b.entity_id === mainEntityId) return 1;
+        if (a.entity_id === selfEntityId) return -1;
+        if (b.entity_id === selfEntityId) return 1;
         return a.name.localeCompare(b.name);
       })
       .sort((a, b) => {
@@ -93,10 +97,25 @@ export const GroupChipsController: FC<GroupChipsControllerProps> = ({
         if (!a.isGrouped && b.isGrouped) return 1;
         return 0;
       });
-  }, [hass.states, speaker_group, showGrouped, mainEntityId, mainEntity]);
+  }, [
+    hass.states,
+    speaker_group,
+    showGrouped,
+    mainEntityId,
+    selfEntityId,
+    mainEntity,
+  ]);
 
   const joinSpeaker = useCallback(
     async (speakerId: string) => {
+      if (speaker_group?.join_service) {
+        const [domain, service] = speaker_group.join_service.split(".");
+        await hass.callService(domain, service, {
+          group: mainEntityId,
+          member: speakerId,
+        });
+        return;
+      }
       const existingMembers = (
         mainEntity?.attributes?.group_members || []
       ).filter((id: string) => id !== mainEntityId);
@@ -105,7 +124,7 @@ export const GroupChipsController: FC<GroupChipsControllerProps> = ({
         group_members: [speakerId, ...existingMembers],
       });
     },
-    [hass, mainEntityId, mainEntity]
+    [hass, mainEntityId, mainEntity, speaker_group]
   );
 
   // Handle joining/unjoining a speaker to/from the group
@@ -116,13 +135,25 @@ export const GroupChipsController: FC<GroupChipsControllerProps> = ({
       try {
         const speaker = hass.states[speakerId];
         if (isGrouped) {
-          // Remove from group
-          await hass.callService("media_player", "unjoin", {
-            entity_id: speakerId,
-          });
+          if (speaker_group?.unjoin_service) {
+            const [domain, service] = speaker_group.unjoin_service.split(".");
+            await hass.callService(domain, service, {
+              group: mainEntityId,
+              member: speakerId,
+            });
+          } else {
+            // Remove from group
+            await hass.callService("media_player", "unjoin", {
+              entity_id: speakerId,
+            });
+          }
         } else {
           // Add to group
-          if (speaker.state === "off") {
+          if (
+            speaker &&
+            speaker.state === "off" &&
+            !speaker_group?.join_service
+          ) {
             await hass.callService("media_player", "turn_on", {
               entity_id: speakerId,
             });
@@ -140,7 +171,7 @@ export const GroupChipsController: FC<GroupChipsControllerProps> = ({
       }
       setPlayersLoading(prev => prev.filter(id => id !== speakerId));
     },
-    [playersLoading, hass, joinSpeaker]
+    [playersLoading, hass, joinSpeaker, speaker_group, mainEntityId]
   );
 
   return (

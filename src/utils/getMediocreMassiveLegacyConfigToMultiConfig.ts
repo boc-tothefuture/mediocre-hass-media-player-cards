@@ -14,6 +14,9 @@ export const getMediocreMassiveLegacyConfigToMediocreMultiConfig = (
       ma_entity_id: config.ma_entity_id,
       ma_favorite_button_entity_id: config.ma_favorite_button_entity_id,
       speaker_group_entity_id: config.speaker_group?.entity_id,
+      speaker_group_self_entity_id: config.speaker_group?.self_entity_id,
+      speaker_group_join_service: config.speaker_group?.join_service,
+      speaker_group_unjoin_service: config.speaker_group?.unjoin_service,
       lms_entity_id: config.lms_entity_id,
       search: config.search,
       media_browser: config.media_browser,
@@ -23,11 +26,16 @@ export const getMediocreMassiveLegacyConfigToMediocreMultiConfig = (
     ...((
       config.speaker_group?.entities.map(entity => {
         const entity_id = typeof entity === "string" ? entity : entity.entity;
+        const selfId =
+          config.speaker_group?.self_entity_id ||
+          config.speaker_group?.entity_id ||
+          config.entity_id;
         if (
           entity_id === config.entity_id ||
-          entity_id === config.speaker_group?.entity_id
+          entity_id === config.speaker_group?.entity_id ||
+          entity_id === selfId
         ) {
-          return null; // skip main entity if it's also listed in the group
+          return null; // skip main/self entity if it's also listed in the group
         }
         if (typeof entity === "string") {
           return {

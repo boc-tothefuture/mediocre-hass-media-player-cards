@@ -65,7 +65,10 @@ const commonMediocreMediaPlayerCardConfigSchema = type({
   "use_art_colors?": "boolean",
   "action?": interactionConfigSchema,
   "speaker_group?": {
-    "entity_id?": type("string").or("null").or("undefined"), // entity_id of the main speaker incase it's different from the entity_id of the media player
+    "entity_id?": type("string").or("null").or("undefined"), // entity_id of the main speaker/sensor incase it's different from the entity_id of the media player
+    "self_entity_id?": type("string").or("null").or("undefined"), // card's own zone entity_id, excluded from the list and treated as the anchor
+    "join_service?": type("string").or("null").or("undefined"), // custom action for joining (e.g., script.music_zone_group_join)
+    "unjoin_service?": type("string").or("null").or("undefined"), // custom action for unjoining (e.g., script.music_zone_group_unjoin)
     entities: mediaPlayerConfigEntityArray, // entity_ids of the speakers that can be grouped with the main speaker
   },
   "custom_buttons?": customButtons,
@@ -99,6 +102,9 @@ export const MediocreMultiMediaPlayer = type({
   "custom_buttons?": customButtons,
   "name?": "string | null",
   "speaker_group_entity_id?": type("string").or("null").or("undefined"), // entity_id of the main speaker incase it's different from the entity_id of the media player
+  "speaker_group_self_entity_id?": type("string").or("null").or("undefined"),
+  "speaker_group_join_service?": type("string").or("null").or("undefined"),
+  "speaker_group_unjoin_service?": type("string").or("null").or("undefined"),
   "can_be_grouped?": "boolean | null",
   "ma_entity_id?": type("string").or("null").or("undefined"), // MusicAssistant entity_id (adds MA specific features (currently search))
   "ma_favorite_button_entity_id?": type("string").or("null").or("undefined"), // MusicAssistant button entity to mark current song as favorite

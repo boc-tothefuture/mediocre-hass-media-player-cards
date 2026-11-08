@@ -202,6 +202,9 @@ export const SpeakerGrouping = memo(() => {
               speaker_group: {
                 entities: groupableEntities,
                 entity_id: mainEntityId,
+                self_entity_id: mediaPlayer.speaker_group_self_entity_id,
+                join_service: mediaPlayer.speaker_group_join_service,
+                unjoin_service: mediaPlayer.speaker_group_unjoin_service,
               },
               options: {
                 show_volume_step_buttons:
@@ -217,7 +220,13 @@ export const SpeakerGrouping = memo(() => {
             <GroupChipsController
               config={{
                 entity_id: mainEntityId,
-                speaker_group: { entities: groupableEntities },
+                speaker_group: {
+                  entities: groupableEntities,
+                  entity_id: mainEntityId,
+                  self_entity_id: mediaPlayer.speaker_group_self_entity_id,
+                  join_service: mediaPlayer.speaker_group_join_service,
+                  unjoin_service: mediaPlayer.speaker_group_unjoin_service,
+                },
               }}
               showGrouped={false}
               layout={{ horizontalMargin: 16 }}

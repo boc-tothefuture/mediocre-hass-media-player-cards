@@ -10,6 +10,9 @@ export const getMultiConfigToMediocreMassiveConfig = (
 ): MediocreMassiveMediaPlayerCardConfig => {
   const speaker_group = {
     entity_id: selectedPlayer.speaker_group_entity_id,
+    self_entity_id: selectedPlayer.speaker_group_self_entity_id,
+    join_service: selectedPlayer.speaker_group_join_service,
+    unjoin_service: selectedPlayer.speaker_group_unjoin_service,
     entities: config.media_players
       .filter(player => player.can_be_grouped)
       .map(player => {

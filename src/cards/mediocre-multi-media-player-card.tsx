@@ -50,6 +50,17 @@ class MediocreMultiMediaPlayerCardWrapper extends CardWrapper<MediocreMultiMedia
       ) {
         return true;
       }
+      if (
+        player.speaker_group_self_entity_id &&
+        getDidMediaPlayerUpdate(
+          prevHass.states[
+            player.speaker_group_self_entity_id
+          ] as MediaPlayerEntity,
+          hass.states[player.speaker_group_self_entity_id] as MediaPlayerEntity
+        )
+      ) {
+        return true;
+      }
     });
   };
 

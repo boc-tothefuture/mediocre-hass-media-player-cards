@@ -105,25 +105,33 @@ export const SpeakerGrouping = () => {
   const hass = useHass();
 
   const { media_players } = config;
-  const { entity_id, speaker_group_entity_id } = selectedPlayer || {};
+  const {
+    entity_id,
+    speaker_group_entity_id,
+    speaker_group_self_entity_id,
+    speaker_group_join_service,
+    speaker_group_unjoin_service,
+  } = selectedPlayer || {};
   // TODO: Volume sync should be liftet to a context so it is also active for the main mini player
   const [syncMainSpeakerVolume, setSyncMainSpeakerVolume] = useState(true);
 
   // Use the specified entity_id for the group or fall back to the main entity_id
   const mainEntityId = speaker_group_entity_id || entity_id;
+  const selfEntityId = speaker_group_self_entity_id || mainEntityId;
 
   const enrichedEntities = useMemo(() => {
     return (
       media_players.map(player => {
         const playerState = hass.states[player.entity_id] as MediaPlayerEntity;
-        const groupPlayerState = hass.states[
-          player.speaker_group_entity_id || player.entity_id
-        ] as MediaPlayerEntity;
+        const groupPlayerState =
+          hass.states[player.speaker_group_entity_id || player.entity_id];
         const groupArray = groupPlayerState?.attributes?.group_members ?? [];
+        const playerSelfId =
+          player.speaker_group_self_entity_id ||
+          player.speaker_group_entity_id ||
+          player.entity_id;
         const isChildInGroup =
-          groupArray.length === 0
-            ? false
-            : groupArray[0] !== groupPlayerState.entity_id;
+          groupArray.length === 0 ? false : groupArray[0] !== playerSelfId;
         return {
           ...playerState,
           name: player.name ?? playerState?.attributes?.friendly_name,
@@ -241,8 +249,9 @@ export const SpeakerGrouping = () => {
 
   if (!entity_id || !mainEntityId) return null;
 
-  const mainEntity = hass.states[mainEntityId] as MediaPlayerEntity;
-  const isGrouped = (mainEntity?.attributes?.group_members?.length ?? 0) > 1;
+  const mainEntityState = hass.states[mainEntityId];
+  const isGrouped =
+    (mainEntityState?.attributes?.group_members?.length ?? 0) > 1;
 
   return (
     <div css={styles.speakerGroupContainer}>
@@ -284,6 +293,9 @@ export const SpeakerGrouping = () => {
                 speaker_group: {
                   entities: groupableEntities,
                   entity_id: mainEntityId,
+                  self_entity_id: selfEntityId,
+                  join_service: speaker_group_join_service,
+                  unjoin_service: speaker_group_unjoin_service,
                 },
                 options: {
                   show_volume_step_buttons:
@@ -308,7 +320,13 @@ export const SpeakerGrouping = () => {
       <GroupChipsController
         config={{
           entity_id: mainEntityId,
-          speaker_group: { entities: groupableEntities },
+          speaker_group: {
+            entities: groupableEntities,
+            entity_id: mainEntityId,
+            self_entity_id: selfEntityId,
+            join_service: speaker_group_join_service,
+            unjoin_service: speaker_group_unjoin_service,
+          },
         }}
         showGrouped={false}
         layout={{ horizontalMargin: 0 }}

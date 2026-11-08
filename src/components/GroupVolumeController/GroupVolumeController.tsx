@@ -407,6 +407,7 @@ export const GroupVolumeController = ({
 
   // Use the specified entity_id for the group or fall back to the main entity_id
   const mainEntityId = speaker_group?.entity_id || entity_id;
+  const selfEntityId = speaker_group?.self_entity_id;
   const mainEntity = hass.states[mainEntityId];
 
   // Get all available speakers that can be grouped
@@ -415,9 +416,13 @@ export const GroupVolumeController = ({
 
     const speakerEntities = [...(speaker_group?.entities || [])];
 
-    // Add main entity if it exists and isn't already in the list
+    // In legacy mode (no self_entity_id and no custom group services), add main entity if not already present
     if (
+      !selfEntityId &&
+      !speaker_group?.join_service &&
+      !speaker_group?.unjoin_service &&
       mainEntity &&
+      mainEntity.entity_id?.startsWith("media_player.") &&
       !speakerEntities.find(
         entity =>
           (typeof entity === "string" ? entity : entity.entity) === mainEntityId
@@ -430,7 +435,13 @@ export const GroupVolumeController = ({
       typeof entity === "string" ? entity : entity.entity;
 
     return speakerEntities
-      .filter(entity => hass.states[getEntityId(entity)])
+      .filter(entity => {
+        const id = getEntityId(entity);
+        if (selfEntityId && id === selfEntityId) return false;
+        if (id === mainEntityId && !id.startsWith("media_player."))
+          return false;
+        return Boolean(hass.states[id]);
+      })
       .map(entity => ({
         entity_id: getEntityId(entity),
         name:
@@ -447,18 +458,25 @@ export const GroupVolumeController = ({
             getEntityId(entity)
           ) || false,
         isMainSpeaker:
-          mainEntity?.attributes?.group_members?.[0] === getEntityId(entity) ||
-          false,
+          (mainEntity?.attributes?.group_members?.[0] ||
+            selfEntityId ||
+            mainEntityId) === getEntityId(entity),
       }))
       .sort((a, b) => {
-        if (a.entity_id === mainEntityId) return -1;
-        if (b.entity_id === mainEntityId) return 1;
         return a.name.localeCompare(b.name);
       });
-  }, [hass.states, speaker_group, mainEntityId, mainEntity]);
+  }, [hass.states, speaker_group, mainEntityId, selfEntityId, mainEntity]);
 
   const joinSpeaker = useCallback(
     async (speakerId: string) => {
+      if (speaker_group?.join_service) {
+        const [domain, service] = speaker_group.join_service.split(".");
+        await hass.callService(domain, service, {
+          group: mainEntityId,
+          member: speakerId,
+        });
+        return;
+      }
       const existingMembers = (
         mainEntity?.attributes?.group_members || []
       ).filter((id: string) => id !== mainEntityId);
@@ -467,7 +485,7 @@ export const GroupVolumeController = ({
         group_members: [speakerId, ...existingMembers],
       });
     },
-    [hass, mainEntityId, mainEntity]
+    [hass, mainEntityId, mainEntity, speaker_group]
   );
 
   // Handle joining/unjoining a speaker to/from the group
@@ -478,13 +496,25 @@ export const GroupVolumeController = ({
       try {
         const speaker = hass.states[speakerId];
         if (isGrouped) {
-          // Remove from group
-          await hass.callService("media_player", "unjoin", {
-            entity_id: speakerId,
-          });
+          if (speaker_group?.unjoin_service) {
+            const [domain, service] = speaker_group.unjoin_service.split(".");
+            await hass.callService(domain, service, {
+              group: mainEntityId,
+              member: speakerId,
+            });
+          } else {
+            // Remove from group
+            await hass.callService("media_player", "unjoin", {
+              entity_id: speakerId,
+            });
+          }
         } else {
           // Add to group
-          if (speaker.state === "off") {
+          if (
+            speaker &&
+            speaker.state === "off" &&
+            !speaker_group?.join_service
+          ) {
             await hass.callService("media_player", "turn_on", {
               entity_id: speakerId,
             });
@@ -502,7 +532,7 @@ export const GroupVolumeController = ({
       }
       setPlayersLoading(prev => prev.filter(id => id !== speakerId));
     },
-    [playersLoading, hass, joinSpeaker]
+    [playersLoading, hass, joinSpeaker, speaker_group, mainEntityId]
   );
 
   const handleToggleMute = useCallback((entityId: string, isMuted: boolean) => {
