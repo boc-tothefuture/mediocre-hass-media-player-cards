@@ -26,63 +26,69 @@ const styles = {
   speakerGroupContainer: css({
     display: "flex",
     flexDirection: "column",
-    paddingTop: "12px",
-    paddingBottom: "16px",
-    borderTop: `0.5px solid ${theme.colors.onCardDivider}`,
-    gap: "12px",
+    padding: "12px 14px 14px 14px",
+    gap: "10px",
+    boxSizing: "border-box",
   }),
   groupTitle: css({
-    fontSize: "16px",
-    fontWeight: 500,
-    color: theme.colors.onCard,
-    margin: "0px 16px",
-  }),
-  syncContainer: css({
-    display: "flex",
-    flexDirection: "row",
-    alignItems: "center",
-    marginLeft: "auto",
-    gap: "4px",
-    marginRight: "19px",
-  }),
-  syncText: css({
-    fontSize: "12px",
+    fontSize: "11px",
+    fontWeight: 700,
+    letterSpacing: "0.06em",
+    textTransform: "uppercase",
     color: theme.colors.onCardMuted,
+    margin: "0 4px",
+  }),
+  linkPill: css({
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "5px",
+    height: "26px",
+    padding: "0 10px",
+    borderRadius: "13px",
+    backgroundColor: "rgba(255, 255, 255, 0.06)",
+    border: "1px solid rgba(255, 255, 255, 0.1)",
+    color: theme.colors.onCardMuted,
+    "--icon-primary-color": theme.colors.onCardMuted,
+    fontSize: "11.5px",
+    fontWeight: 600,
+    fontFamily: "inherit",
+    cursor: "pointer",
+    userSelect: "none",
+    WebkitUserSelect: "none",
+  }),
+  linkPillActive: css({
+    backgroundColor: "rgba(137, 180, 250, 0.18)",
+    border: "1px solid rgba(137, 180, 250, 0.38)",
+    color: "#cdd6f4",
+    "--icon-primary-color": "#cdd6f4",
   }),
   groupedSpeakers: css({
     display: "flex",
     flexDirection: "column",
     gap: "8px",
-    marginLeft: "16px",
-    marginRight: "16px",
   }),
   titleRow: css({
     display: "flex",
     alignItems: "center",
+    justifyContent: "space-between",
   }),
   playerChips: css({
     display: "flex",
     flexDirection: "row",
-    gap: "6px 2px",
-    overflowX: "auto",
-    scrollbarWidth: "none",
-    "-ms-overflow-style": "none",
-    "&::-webkit-scrollbar": {
-      display: "none",
-    },
+    flexWrap: "wrap",
+    gap: "6px",
   }),
   chipPlayer: css({
-    padding: "0px 6px",
+    padding: "0px 8px 0px 6px",
     gap: 6,
-    "&:first-child": {
-      marginLeft: 16,
-    },
-    "&:last-child": {
-      marginRight: 16,
-    },
+    marginRight: 0,
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    color: "rgba(255, 255, 255, 0.9)",
+    "--icon-primary-color": "rgba(255, 255, 255, 0.85)",
+    border: "1px solid rgba(255, 255, 255, 0.12)",
   }),
   chipPlayerOff: css({
-    opacity: 0.8,
+    opacity: 0.65,
   }),
   chipPlayerArtwork: css({
     borderRadius: "50%",
@@ -248,25 +254,28 @@ export const SpeakerGrouping = () => {
                 id: "MediocreMediaPlayerCard.SpeakerGrouping.grouped_speakers_title",
               })}
             </h3>
-            <div css={styles.syncContainer}>
-              <span
-                css={styles.syncText}
-                onClick={() => setSyncMainSpeakerVolume(!syncMainSpeakerVolume)}
-              >
-                {t({
-                  id: "MediocreMediaPlayerCard.SpeakerGrouping.link_volume_title",
-                })}
-              </span>
-              <IconButton
+            <button
+              type="button"
+              css={[
+                styles.linkPill,
+                syncMainSpeakerVolume && styles.linkPillActive,
+              ]}
+              onClick={() => setSyncMainSpeakerVolume(!syncMainSpeakerVolume)}
+            >
+              <Icon
                 icon={
                   syncMainSpeakerVolume
                     ? "mdi:check-circle"
                     : "mdi:circle-outline"
                 }
-                size="x-small"
-                onClick={() => setSyncMainSpeakerVolume(!syncMainSpeakerVolume)}
+                size="xx-small"
               />
-            </div>
+              <span>
+                {t({
+                  id: "MediocreMediaPlayerCard.SpeakerGrouping.link_volume_title",
+                })}
+              </span>
+            </button>
           </div>
           <div css={styles.groupedSpeakers}>
             <GroupVolumeController
@@ -302,7 +311,7 @@ export const SpeakerGrouping = () => {
           speaker_group: { entities: groupableEntities },
         }}
         showGrouped={false}
-        layout={{ horizontalMargin: 16 }}
+        layout={{ horizontalMargin: 0 }}
       />
       {!config.disable_player_focus_switching && (
         <Fragment>

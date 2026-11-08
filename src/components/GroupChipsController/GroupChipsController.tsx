@@ -10,22 +10,22 @@ const styles = {
   root: css({
     display: "flex",
     flexDirection: "row",
-    gap: "2px",
+    flexWrap: "wrap",
+    gap: "6px",
     justifyContent: "flex-start",
-    overflowX: "auto",
-    scrollbarWidth: "none",
-    "-ms-overflow-style": "none",
-    "&::-webkit-scrollbar": {
-      display: "none",
-    },
+    padding: "0 var(--mmpc-chip-horizontal-margin, 0px)",
+    boxSizing: "border-box",
   }),
   speakerChip: css({
-    "&:first-child": {
-      marginLeft: "var(--mmpc-chip-horizontal-margin, 0px)",
-    },
-    "&:last-child": {
-      marginRight: "var(--mmpc-chip-horizontal-margin, 0px)",
-    },
+    marginRight: 0,
+    backgroundColor: "var(--mmpc-chip-background, rgba(255, 255, 255, 0.08))",
+    color: "var(--mmpc-chip-foreground, rgba(255, 255, 255, 0.9))",
+    "--icon-primary-color":
+      "var(--mmpc-chip-foreground, rgba(255, 255, 255, 0.72))",
+    border: "1px solid var(--mmpc-chip-border, rgba(255, 255, 255, 0.12))",
+    fontSize: "12.5px",
+    fontWeight: 600,
+    gap: "6px",
   }),
 };
 
@@ -144,7 +144,13 @@ export const GroupChipsController: FC<GroupChipsControllerProps> = ({
   );
 
   return (
-    <div css={styles.root} id="mmpc-group-chips-controller">
+    <div
+      css={styles.root}
+      id="mmpc-group-chips-controller"
+      style={{
+        "--mmpc-chip-horizontal-margin": `${layout?.horizontalMargin ?? 0}px`,
+      }}
+    >
       {availableSpeakers.map(speaker => (
         <Chip
           css={styles.speakerChip}
@@ -155,9 +161,6 @@ export const GroupChipsController: FC<GroupChipsControllerProps> = ({
           }
           icon={speaker.isGrouped ? "mdi:close" : "mdi:plus"}
           iconPosition="right"
-          style={{
-            "--mmpc-chip-horizontal-margin": `${layout?.horizontalMargin ?? 0}px`,
-          }}
         >
           {speaker.name}
         </Chip>

@@ -1,45 +1,190 @@
-import { useCallback, useMemo, useState } from "preact/hooks";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "preact/hooks";
 import type {
   CommonMediocreMediaPlayerCardConfig,
   MediaPlayerConfigEntity,
 } from "@types";
-import { IconButton, useHass, VolumeSlider } from "@components";
-import { getHass, getVolumeIcon } from "@utils";
+import { IconButton, useHass } from "@components";
+import { getHass, getVolumeIcon, setVolume } from "@utils";
 import { css } from "@emotion/react";
-import { theme } from "@constants";
 
 const styles = {
-  speakersTable: css({
+  speakersList: css({
+    display: "flex",
+    flexDirection: "column",
+    gap: "8px",
     width: "100%",
-    borderCollapse: "collapse",
-    tableLayout: "fixed",
   }),
-  speakerRow: css({
+  speakerPill: css({
+    position: "relative",
+    height: "44px",
+    minHeight: "44px",
+    borderRadius: "22px",
+    backgroundColor: "rgba(255, 255, 255, 0.06)",
+    border: "1px solid rgba(255, 255, 255, 0.08)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "0 8px 0 6px",
+    overflow: "hidden",
+    boxSizing: "border-box",
+    userSelect: "none",
+    WebkitUserSelect: "none",
+  }),
+  speakerPillOff: css({
+    opacity: 0.65,
+  }),
+  rangeInput: css({
+    "--slider-track-size": "44px",
+    "--slider-thumb-size": "44px",
+    "--slider-track-radius": "0px",
+    "--slider-thumb-radius": "0px",
+    "--slider-track-color": "transparent",
+    "--slider-fill-color": "rgba(137, 180, 250, 0.65)",
+    "--slider-thumb-color": "transparent",
+    "--slider-direction": "to right",
+    "&:dir(rtl)": {
+      "--slider-direction": "to left",
+    },
+    "--attr-min": "attr(min type(<number>), 0)",
+    "--attr-max": "attr(max type(<number>), 100)",
+    "--control-value": "attr(value type(<number>), 50)",
+    "--slider-progress":
+      "calc(progress(var(--control-value), var(--attr-min), var(--attr-max)) * 100%)",
+    "@supports not (opacity: progress(1, 0, 100))": {
+      "--slider-progress":
+        "calc((var(--control-value) - var(--attr-min)) / (var(--attr-max) - var(--attr-min)) * 100%)",
+    },
+    position: "absolute",
+    inset: 0,
+    appearance: "none",
+    WebkitAppearance: "none",
+    inlineSize: "100%",
+    blockSize: "100%",
+    margin: 0,
+    padding: 0,
+    border: 0,
+    borderRadius: 0,
+    background: "transparent",
+    cursor: "pointer",
+    zIndex: 1,
+    "&:focus-visible": {
+      outline: "2px solid var(--primary-color, #89b4fa)",
+      outlineOffset: "-2px",
+    },
+    "&::-webkit-slider-runnable-track": {
+      blockSize: "var(--slider-track-size)",
+      border: 0,
+      borderRadius: "var(--slider-track-radius)",
+      background:
+        "linear-gradient(var(--slider-direction), rgba(137, 180, 250, 0.42) 0%, var(--slider-fill-color) var(--slider-progress), var(--slider-track-color) var(--slider-progress))",
+    },
+    "&::-webkit-slider-thumb": {
+      WebkitAppearance: "none",
+      appearance: "none",
+      inlineSize: "4px",
+      blockSize: "var(--slider-thumb-size)",
+      marginBlockStart:
+        "calc((var(--slider-track-size) - var(--slider-thumb-size)) / 2)",
+      border: 0,
+      borderRadius: "var(--slider-thumb-radius)",
+      background: "var(--slider-thumb-color)",
+    },
+    "&::-moz-range-track": {
+      blockSize: "var(--slider-track-size)",
+      border: 0,
+      borderRadius: "var(--slider-track-radius)",
+      background: "var(--slider-track-color)",
+    },
+    "&::-moz-range-progress": {
+      blockSize: "var(--slider-track-size)",
+      borderRadius: "var(--slider-track-radius)",
+      background: "var(--slider-fill-color)",
+    },
+    "&::-moz-range-thumb": {
+      inlineSize: "4px",
+      blockSize: "var(--slider-thumb-size)",
+      border: 0,
+      borderRadius: "var(--slider-thumb-radius)",
+      background: "var(--slider-thumb-color)",
+    },
+  }),
+  contentRow: css({
+    position: "relative",
+    zIndex: 2,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
     width: "100%",
+    height: "100%",
+    gap: "8px",
+    pointerEvents: "none",
+  }),
+  leftGroup: css({
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    minWidth: 0,
+    flex: 1,
+  }),
+  rightGroup: css({
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+    flexShrink: 0,
+  }),
+  muteBtn: css({
+    width: "32px",
     height: "32px",
+    minWidth: "32px",
+    minHeight: "32px",
+    padding: 0,
+    borderRadius: "50%",
+    backgroundColor: "rgba(16, 16, 26, 0.52)",
+    backdropFilter: "blur(6px)",
+    WebkitBackdropFilter: "blur(6px)",
+    border: "1px solid rgba(255, 255, 255, 0.14)",
+    color: "#ffffff",
+    "--icon-primary-color": "#ffffff",
+    pointerEvents: "auto",
   }),
-  nameCell: css({
-    color: theme.colors.onCard,
-    paddingRight: "8px",
-    fontSize: "14px",
+  miniBtn: css({
+    width: "28px",
+    height: "28px",
+    minWidth: "28px",
+    minHeight: "28px",
+    padding: 0,
+    borderRadius: "50%",
+    backgroundColor: "rgba(16, 16, 26, 0.48)",
+    backdropFilter: "blur(6px)",
+    WebkitBackdropFilter: "blur(6px)",
+    border: "1px solid rgba(255, 255, 255, 0.1)",
+    color: "rgba(255, 255, 255, 0.9)",
+    "--icon-primary-color": "rgba(255, 255, 255, 0.9)",
+    pointerEvents: "auto",
+  }),
+  speakerName: css({
+    fontSize: "13px",
+    fontWeight: 600,
+    color: "#ffffff",
+    textShadow: "0 1px 2px rgba(0, 0, 0, 0.45)",
     whiteSpace: "nowrap",
     overflow: "hidden",
     textOverflow: "ellipsis",
   }),
-  nameCellMainSpeaker: css({
-    fontWeight: 500,
+  speakerNameMain: css({
+    fontWeight: 700,
   }),
-  controlsCell: css({
-    padding: "0px 4px",
-  }),
-  buttonCell: css({
-    width: "28px",
-    whiteSpace: "nowrap",
-  }),
-  controlsContainer: css({
-    display: "flex",
-    alignItems: "center",
-    width: "100%",
+  speakerPct: css({
+    fontSize: "12.5px",
+    fontWeight: 700,
+    color: "rgba(255, 255, 255, 0.92)",
+    textShadow: "0 1px 2px rgba(0, 0, 0, 0.45)",
   }),
 };
 
@@ -51,6 +196,186 @@ export type GroupSpeaker = {
   isGrouped: boolean;
   isOff: boolean;
   isMainSpeaker: boolean;
+};
+
+type SpeakerVolumePillProps = {
+  speaker: GroupSpeaker;
+  isLoading: boolean;
+  syncGroupChildren: boolean;
+  showStepButtons: boolean;
+  useVolumeUpDownForSteps: boolean;
+  onToggleGroup: (speakerId: string, isGrouped: boolean) => void;
+  onToggleMute: (entityId: string, isMuted: boolean) => void;
+  onToggleOn: (entityId: string) => void;
+};
+
+const SpeakerVolumePill = ({
+  speaker,
+  isLoading,
+  syncGroupChildren,
+  showStepButtons,
+  useVolumeUpDownForSteps,
+  onToggleGroup,
+  onToggleMute,
+  onToggleOn,
+}: SpeakerVolumePillProps) => {
+  const { entity_id, name, volume, muted, isGrouped, isMainSpeaker, isOff } =
+    speaker;
+  const isDisabled = isLoading || (isMainSpeaker && !isGrouped);
+
+  const [internalValue, setInternalValue] = useState<number>(
+    Math.round(volume * 100)
+  );
+  const debounceTimeout = useRef<NodeJS.Timeout | undefined>();
+
+  useEffect(() => {
+    setInternalValue(Math.round(volume * 100));
+  }, [volume]);
+
+  useEffect(() => {
+    return () => {
+      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+    };
+  }, []);
+
+  const handleInput = useCallback(
+    (e: Event) => {
+      const target = e.currentTarget as HTMLInputElement;
+      const newVal = Number(target.value);
+      setInternalValue(newVal);
+      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+      debounceTimeout.current = setTimeout(() => {
+        setVolume(entity_id, newVal / 100, syncGroupChildren);
+      }, 150);
+    },
+    [entity_id, syncGroupChildren]
+  );
+
+  const handleChange = useCallback(
+    (e: Event) => {
+      const target = e.currentTarget as HTMLInputElement;
+      const newVal = Number(target.value);
+      setInternalValue(newVal);
+      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+      setVolume(entity_id, newVal / 100, syncGroupChildren);
+    },
+    [entity_id, syncGroupChildren]
+  );
+
+  const handleStep = useCallback(
+    (direction: "increment" | "decrement", e: MouseEvent) => {
+      e.stopPropagation();
+      if (useVolumeUpDownForSteps) {
+        getHass().callService(
+          "media_player",
+          direction === "increment" ? "volume_up" : "volume_down",
+          { entity_id }
+        );
+      } else {
+        const nextVal = Math.max(
+          0,
+          Math.min(100, internalValue + (direction === "increment" ? 5 : -5))
+        );
+        setInternalValue(nextVal);
+        setVolume(entity_id, nextVal / 100, syncGroupChildren);
+      }
+    },
+    [entity_id, useVolumeUpDownForSteps, internalValue, syncGroupChildren]
+  );
+
+  const volumeIcon = useMemo(
+    () => getVolumeIcon(internalValue / 100, muted),
+    [internalValue, muted]
+  );
+
+  return (
+    <div css={[styles.speakerPill, isOff && styles.speakerPillOff]}>
+      {!isOff && (
+        <input
+          type="range"
+          min={0}
+          max={100}
+          step={1}
+          value={internalValue}
+          aria-label={`${name} Volume`}
+          aria-valuetext={`${internalValue}%`}
+          css={styles.rangeInput}
+          style={{
+            "--attr-min": "0",
+            "--attr-max": "100",
+            "--control-value": String(internalValue),
+          }}
+          onInput={handleInput}
+          onChange={handleChange}
+        />
+      )}
+      <div css={styles.contentRow}>
+        <div css={styles.leftGroup}>
+          {isOff ? (
+            <IconButton
+              css={styles.muteBtn}
+              style={{ "--mmpc-icon-button-size": "16px" }}
+              size="x-small"
+              onClick={e => {
+                e.stopPropagation();
+                onToggleOn(entity_id);
+              }}
+              icon="mdi:power"
+              disabled={isDisabled}
+            />
+          ) : (
+            <IconButton
+              css={styles.muteBtn}
+              style={{ "--mmpc-icon-button-size": "16px" }}
+              size="x-small"
+              onClick={e => {
+                e.stopPropagation();
+                onToggleMute(entity_id, muted);
+              }}
+              icon={volumeIcon}
+            />
+          )}
+          <span
+            css={[styles.speakerName, isMainSpeaker && styles.speakerNameMain]}
+          >
+            {name}
+          </span>
+        </div>
+        <div css={styles.rightGroup}>
+          {!isOff && showStepButtons && (
+            <IconButton
+              css={styles.miniBtn}
+              style={{ "--mmpc-icon-button-size": "15px" }}
+              size="x-small"
+              onClick={e => handleStep("decrement", e)}
+              icon="mdi:minus"
+            />
+          )}
+          {!isOff && <span css={styles.speakerPct}>{internalValue}%</span>}
+          {!isOff && showStepButtons && (
+            <IconButton
+              css={styles.miniBtn}
+              style={{ "--mmpc-icon-button-size": "15px" }}
+              size="x-small"
+              onClick={e => handleStep("increment", e)}
+              icon="mdi:plus"
+            />
+          )}
+          <IconButton
+            css={styles.miniBtn}
+            style={{ "--mmpc-icon-button-size": "15px" }}
+            size="x-small"
+            onClick={e => {
+              e.stopPropagation();
+              onToggleGroup(entity_id, isGrouped);
+            }}
+            icon={isGrouped ? "mdi:close" : "mdi:plus"}
+            disabled={isDisabled}
+          />
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export type GroupVolumeControllerProps = {
@@ -185,79 +510,27 @@ export const GroupVolumeController = ({
     getHass().callService("media_player", "turn_on", { entity_id: entityId });
   }, []);
 
-  const renderSpeaker = (
-    speaker: GroupSpeaker,
-    _index: number,
-    _groupedSpeakers: GroupSpeaker[]
-  ) => {
-    const { entity_id, name, volume, muted, isGrouped, isMainSpeaker, isOff } =
-      speaker;
-    const isLoading = playersLoading.includes(entity_id);
-    const isDisabled = isLoading || (isMainSpeaker && !isGrouped);
-
-    return (
-      <tr css={styles.speakerRow} key={entity_id}>
-        <td
-          css={[styles.nameCell, isMainSpeaker && styles.nameCellMainSpeaker]}
-        >
-          {name}
-        </td>
-        {isOff ? (
-          <td css={styles.buttonCell}>
-            <IconButton
-              size="x-small"
-              onClick={() => handleToggleOn(entity_id)}
-              icon="mdi:power"
-              disabled={isDisabled}
-            />
-          </td>
-        ) : (
-          <td css={styles.buttonCell}>
-            <IconButton
-              size="x-small"
-              onClick={() => handleToggleMute(entity_id, muted)}
-              icon={getVolumeIcon(volume, muted)}
-            />
-          </td>
-        )}
-        <td css={styles.controlsCell}>
-          <div css={styles.controlsContainer}>
-            <VolumeSlider
-              entityId={entity_id}
-              syncGroupChildren={isMainSpeaker && syncMainSpeaker}
-              sliderSize={"small"}
-              showStepButtons={
-                config.options?.show_volume_step_buttons ?? false
-              }
-              useVolumeUpDownForSteps={
-                config.options?.use_volume_up_down_for_step_buttons ?? false
-              }
-            />
-          </div>
-        </td>
-        <td css={styles.buttonCell}>
-          <IconButton
-            size="x-small"
-            onClick={() => handleToggleGroup(entity_id, isGrouped)}
-            icon={isGrouped ? "mdi:close" : "mdi:plus"}
-            disabled={isDisabled}
-          />
-        </td>
-      </tr>
-    );
-  };
+  const showStepButtons = config.options?.show_volume_step_buttons ?? false;
+  const useVolumeUpDownForSteps =
+    config.options?.use_volume_up_down_for_step_buttons ?? false;
 
   return (
-    <div className={className}>
-      <table css={styles.speakersTable}>
-        <tbody>
-          {availableSpeakers
-            .filter(speaker => speaker.isGrouped)
-            .map((speaker, index, filteredSpeakers) =>
-              renderSpeaker(speaker, index, filteredSpeakers)
-            )}
-        </tbody>
-      </table>
+    <div className={className} css={styles.speakersList}>
+      {availableSpeakers
+        .filter(speaker => speaker.isGrouped)
+        .map(speaker => (
+          <SpeakerVolumePill
+            key={speaker.entity_id}
+            speaker={speaker}
+            isLoading={playersLoading.includes(speaker.entity_id)}
+            syncGroupChildren={speaker.isMainSpeaker && syncMainSpeaker}
+            showStepButtons={showStepButtons}
+            useVolumeUpDownForSteps={useVolumeUpDownForSteps}
+            onToggleGroup={handleToggleGroup}
+            onToggleMute={handleToggleMute}
+            onToggleOn={handleToggleOn}
+          />
+        ))}
     </div>
   );
 };

@@ -67,10 +67,14 @@ const styles = {
     minHeight: "56px",
     maxHeight: "56px",
     padding: "0 9px",
+    borderRadius: "28px",
     position: "relative",
     overflow: "hidden",
     boxSizing: "border-box",
     containerType: "inline-size",
+  }),
+  cardContentExpanded: css({
+    boxShadow: "0 4px 14px rgba(0, 0, 0, 0.28)",
   }),
   cardContentOff: css({
     cursor: "pointer",
@@ -196,6 +200,10 @@ const styles = {
     border: "1px solid rgba(255, 255, 255, 0.12)",
     color: "#ffffff",
     "--icon-primary-color": "#ffffff",
+  }),
+  frostedActionBtnActive: css({
+    backgroundColor: "rgba(137, 180, 250, 0.28)",
+    borderColor: "rgba(137, 180, 250, 0.5)",
   }),
   frostedSubtleBtn: css({
     width: "30px",
@@ -490,6 +498,12 @@ export const MediocreCompactMultiMediaPlayerCard = ({
             styles.cardContent,
             !isOn && styles.cardContentOff,
             hasValidArt && styles.cardContentWithArt,
+            ((showGrouping && hasGroupingFeature) ||
+              showCustomButtons ||
+              showSearch ||
+              showMediaBrowser ||
+              showQueue) &&
+              styles.cardContentExpanded,
           ]}
           onClick={!isOn ? togglePower : undefined}
         >
@@ -591,7 +605,10 @@ export const MediocreCompactMultiMediaPlayerCard = ({
                   <div css={styles.groupBtnWrapper}>
                     <IconButton
                       id="mmpc-compact-grouping-toggle"
-                      css={styles.frostedActionBtn}
+                      css={[
+                        styles.frostedActionBtn,
+                        showGrouping && styles.frostedActionBtnActive,
+                      ]}
                       style={{ "--mmpc-icon-button-size": "18px" }}
                       size="x-small"
                       onClick={toggleGrouping}
