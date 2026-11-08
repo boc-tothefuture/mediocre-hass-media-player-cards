@@ -226,41 +226,47 @@ const SpeakerVolumePill = ({
   const [internalValue, setInternalValue] = useState<number>(
     Math.round(volume * 100)
   );
-  const debounceTimeout = useRef<NodeJS.Timeout | undefined>();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const isDragging = useRef(false);
+  const draggingTimeout = useRef<NodeJS.Timeout | undefined>();
 
   useEffect(() => {
-    setInternalValue(Math.round(volume * 100));
+    if (!isDragging.current) {
+      setInternalValue(Math.round(volume * 100));
+    }
   }, [volume]);
 
   useEffect(() => {
     return () => {
-      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+      if (draggingTimeout.current) clearTimeout(draggingTimeout.current);
     };
   }, []);
 
-  const handleInput = useCallback(
-    (e: Event) => {
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    const onNativeChange = (e: Event) => {
       const target = e.currentTarget as HTMLInputElement;
       const newVal = Number(target.value);
       setInternalValue(newVal);
-      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
-      debounceTimeout.current = setTimeout(() => {
-        setVolume(entity_id, newVal / 100, syncGroupChildren);
-      }, 150);
-    },
-    [entity_id, syncGroupChildren]
-  );
-
-  const handleChange = useCallback(
-    (e: Event) => {
-      const target = e.currentTarget as HTMLInputElement;
-      const newVal = Number(target.value);
-      setInternalValue(newVal);
-      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
       setVolume(entity_id, newVal / 100, syncGroupChildren);
-    },
-    [entity_id, syncGroupChildren]
-  );
+      if (draggingTimeout.current) clearTimeout(draggingTimeout.current);
+      draggingTimeout.current = setTimeout(() => {
+        isDragging.current = false;
+      }, 200);
+    };
+    el.addEventListener("change", onNativeChange);
+    return () => {
+      el.removeEventListener("change", onNativeChange);
+    };
+  }, [entity_id, syncGroupChildren, isOff]);
+
+  const handleInput = useCallback((e: Event) => {
+    const target = e.currentTarget as HTMLInputElement;
+    if (draggingTimeout.current) clearTimeout(draggingTimeout.current);
+    isDragging.current = true;
+    setInternalValue(Number(target.value));
+  }, []);
 
   const handleStep = useCallback(
     (direction: "increment" | "decrement", e: MouseEvent) => {
@@ -292,6 +298,7 @@ const SpeakerVolumePill = ({
     <div css={[styles.speakerPill, isOff && styles.speakerPillOff]}>
       {!isOff && (
         <input
+          ref={inputRef}
           type="range"
           min={0}
           max={100}
@@ -306,7 +313,6 @@ const SpeakerVolumePill = ({
             "--control-value": String(internalValue),
           }}
           onInput={handleInput}
-          onChange={handleChange}
         />
       )}
       <div css={styles.contentRow}>

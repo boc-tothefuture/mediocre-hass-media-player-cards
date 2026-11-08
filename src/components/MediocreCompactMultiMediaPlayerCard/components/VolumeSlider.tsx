@@ -249,17 +249,42 @@ export const VolumeSlider = ({
   const [internalValue, setInternalValue] = useState<number>(
     Math.round(volume * 100)
   );
-  const debounceTimeout = useRef<NodeJS.Timeout | undefined>();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const isDragging = useRef(false);
+  const draggingTimeout = useRef<NodeJS.Timeout | undefined>();
 
   useEffect(() => {
-    setInternalValue(Math.round(volume * 100));
+    if (!isDragging.current) {
+      setInternalValue(Math.round(volume * 100));
+    }
   }, [volume]);
 
   useEffect(() => {
     return () => {
-      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+      if (draggingTimeout.current) clearTimeout(draggingTimeout.current);
     };
   }, []);
+
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    const onNativeChange = (e: Event) => {
+      const target = e.currentTarget as HTMLInputElement;
+      const newVal = Number(target.value);
+      setInternalValue(newVal);
+      if (targetEntityId) {
+        setVolume(targetEntityId, newVal / 100, true);
+      }
+      if (draggingTimeout.current) clearTimeout(draggingTimeout.current);
+      draggingTimeout.current = setTimeout(() => {
+        isDragging.current = false;
+      }, 200);
+    };
+    el.addEventListener("change", onNativeChange);
+    return () => {
+      el.removeEventListener("change", onNativeChange);
+    };
+  }, [targetEntityId]);
 
   const handleToggleMute = useCallback(
     (e: MouseEvent) => {
@@ -295,31 +320,12 @@ export const VolumeSlider = ({
     [targetEntityId, useVolumeUpDownForSteps, internalValue]
   );
 
-  const handleInput = useCallback(
-    (e: Event) => {
-      const target = e.currentTarget as HTMLInputElement;
-      const newVal = Number(target.value);
-      setInternalValue(newVal);
-      if (!targetEntityId) return;
-      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
-      debounceTimeout.current = setTimeout(() => {
-        setVolume(targetEntityId, newVal / 100, true);
-      }, 150);
-    },
-    [targetEntityId]
-  );
-
-  const handleChange = useCallback(
-    (e: Event) => {
-      const target = e.currentTarget as HTMLInputElement;
-      const newVal = Number(target.value);
-      setInternalValue(newVal);
-      if (!targetEntityId) return;
-      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
-      setVolume(targetEntityId, newVal / 100, true);
-    },
-    [targetEntityId]
-  );
+  const handleInput = useCallback((e: Event) => {
+    const target = e.currentTarget as HTMLInputElement;
+    if (draggingTimeout.current) clearTimeout(draggingTimeout.current);
+    isDragging.current = true;
+    setInternalValue(Number(target.value));
+  }, []);
 
   const VolumeIcon = useMemo(
     () => getVolumeIcon(internalValue / 100, volumeMuted),
@@ -334,6 +340,7 @@ export const VolumeSlider = ({
   return (
     <div css={styles.overlay} onClick={e => e.stopPropagation()}>
       <input
+        ref={inputRef}
         type="range"
         min={0}
         max={100}
@@ -348,7 +355,6 @@ export const VolumeSlider = ({
           "--control-value": String(internalValue),
         }}
         onInput={handleInput}
-        onChange={handleChange}
       />
       <div css={styles.contentRow}>
         <div css={styles.leftGroup}>

@@ -1,4 +1,4 @@
-# Handoff Note — `v0.30.0-brian.5` (Bubble Card Media Player & Grouped Speakers Redesign)
+# Handoff Note — `v0.30.0-brian.6` (Bubble Card Media Player, Grouped Speakers & Smooth Volume Drag)
 
 ## 1. Card Type
 
@@ -9,7 +9,7 @@
 
 ## 2. Config Diff Against `v0.30.0-brian.2`
 
-No YAML configuration schema keys were added, renamed, or removed in `v0.30.0-brian.3`, `brian.4`, or `brian.5`. All changes are visual/layout and behavioral updates to the compact/standard card (`MediocreCompactMultiMediaPlayerCard`, used by `custom:mediocre-media-player-card` and `custom:mediocre-multi-media-player-card` when `size: compact`).
+No YAML configuration schema keys were added, renamed, or removed in `v0.30.0-brian.3`, `brian.4`, `brian.5`, or `brian.6`. All changes are visual/layout and behavioral updates to the compact/standard card (`MediocreCompactMultiMediaPlayerCard`, used by `custom:mediocre-media-player-card` and `custom:mediocre-multi-media-player-card` when `size: compact`).
 
 | Option                             | Type      | Default | Change vs `v0.30.0-brian.2`                                                                                                                                                                                                                                                                        |
 | ---------------------------------- | --------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -54,7 +54,7 @@ All configurations from `v0.30.0-brian.2` remain valid and do not fail validatio
   - **Off State**: Left `38px` circular badge with `mdi:volume-off` ("no sound" icon) + Player Name and `Off` subtitle. Tapping anywhere on the card calls `media_player.toggle` to turn it on.
   - **Idle / No-Artwork State**: Left `38px` circular frosted badge with the source/device icon + Title/PlayerInfo on the left, and frosted circular transport/utility buttons on the right.
   - **Playing with Artwork State**: Left circular badge collapses away; artwork fills `100%` of the card background behind a directional dark gradient scrim. Left side stacks up to 3 lines (`Song Title`, `Artist`, and `PlayerInfo` room name). Right side has frosted circular buttons (`34px` secondary buttons, `38px` white circle `Play/Pause` button, `30px` subtle utility buttons, plus a `+N` badge on the `mdi:speaker-multiple` button when grouped).
-  - **Volume Slider**: Tapping `#mmpc-compact-volume-toggle` replaces the `56px` row in-place with a **full-card height & width Bubble volume slider** (`56px` tall native `<input type="range">` fill track). Left side has a `38px` circular Mute toggle button + player name; right side has live `%` text, optional `-`/`+` step buttons, speaker grouping button (`#mmpc-compact-volume-grouping-toggle` with `+N` badge when grouped), and close (`×`, `#mmpc-compact-volume-close`) button.
+  - **Volume Slider**: Tapping `#mmpc-compact-volume-toggle` replaces the `56px` row in-place with a **full-card height & width Bubble volume slider** (`56px` tall native `<input type="range">` fill track). Left side has a `38px` circular Mute toggle button + player name; right side has live `%` text, optional `-`/`+` step buttons, speaker grouping button (`#mmpc-compact-volume-grouping-toggle` with `+N` badge when grouped), and close (`×`, `#mmpc-compact-volume-close`) button. In `v0.30.0-brian.6`, volume dragging matches Bubble Card's smooth commit-on-release behavior: zero service calls fire during drag, `media_player.volume_set` is called exactly once upon finger release, and incoming HA state echoes are ignored during drag and for a 200ms settle window.
   - **Grouped Speakers View**: When expanded, the top 56px player pill retains its rounded pill contour. Each grouped speaker is rendered as a full-width 44px Bubble volume pill with live drag/input tracking, overlaid room title, mute button, volume percentage, optional step buttons, and unjoin button. Available speakers are laid out below as frosted Bubble chips with add icons.
 
 ---
